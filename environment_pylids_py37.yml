@@ -1,0 +1,35 @@
+name: pylids
+channels:
+  - anaconda
+  - conda-forge
+  - auto 
+  - omnia
+dependencies:
+  - python==3.7
+  - numpy
+  - scipy
+  - matplotlib
+  - opencv>=4.0.0
+  - jupyter
+  - ipython
+  - pillow
+  - tqdm
+  - eigen3
+  - cython
+  - numexpr
+  - appdirs
+  - scikit-learn
+  - scikit-image
+  - shapely
+  - msgpack-python==0.6.2
+  - python-wget
+  - pip
+  - pypng
+  - tensorflow-gpu==1.15.0
+  - cudatoolkit==10.2  
+  - pip:
+    - netcdf4
+    - imageio-ffmpeg
+    - polyfit
+    - appdirs
+    - imagecorruptions
