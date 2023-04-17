@@ -17,7 +17,6 @@ dependencies:
   - eigen3
   - cython
   - numexpr
-  - appdirs
   - scikit-learn
   - scikit-image
   - shapely
