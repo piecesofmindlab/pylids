@@ -58,7 +58,6 @@ then
 else
         git clone git@github.com:piecesofmindlab/pylids.git
 fi
-cd pylids
 python setup.py install
 cd ..
 
