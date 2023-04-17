@@ -56,10 +56,9 @@ if [ -d pylids ]
 then
         :
 else
-        git clone git@github.com:piecesofmindlab/pylids_dev.git
+        git clone git@github.com:piecesofmindlab/pylids.git
 fi
 cd pylids
-git checkout dev
 python setup.py install
 cd ..
 
