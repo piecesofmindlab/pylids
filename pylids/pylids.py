@@ -385,7 +385,7 @@ def analyze_video(eye_vid=None,
         elif 'eye1' in eye_vid:
             eye_id = 1
         else:
-            raise ValueError("If video is not `eye0.mp4` or eye1.mp4`, per pupil labs conventions, then eye_id kwarg must be specified! use eye1 for upright videos and eye0 for inverted videos.")
+            raise ValueError("If video is not `eye0.mp4` or eye1.mp4`, per pupil labs conventions, then eye_id kwarg must be specified! use eye_id = 1 for upright videos and eye_id = 0 for inverted videos.")
 
     # download dlc model weights into pylids config folder, if they do not already exist
     utils.get_model_weights(model=model_name)
