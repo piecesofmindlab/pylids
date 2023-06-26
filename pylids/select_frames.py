@@ -198,7 +198,7 @@ def select_frames_to_label(trn_fls, tst_fls,
                          n_frames=10,
                          kmeans_batch_sz=300,
                          kmeans_type='batch',
-                         return_min_rand_frames = True):
+                         return_min_rand_frames = False):
     """Summary
 
     Args:
