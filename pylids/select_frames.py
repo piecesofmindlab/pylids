@@ -48,7 +48,7 @@ def select_augmentations(trn_fls, tst_fls, aug_fls,
                          n_frames=498,
                          kmeans_batch_sz=300,
                          kmeans_type='batch',
-                         return_min_rand_frames = True,
+                         return_min_rand_frames = False,
                          num_augs_per_cnd = 2080,
                          guess_n_clusters=None):
     """Summary
