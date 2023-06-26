@@ -336,7 +336,11 @@ def analyze_video(eye_vid=None,
     eye_vid : str
         Path to video file.
     model_name : str
-        Name of the model to use for pupil and eyelid estimation. For available models, use pylids.available_models()
+        Name of the model to use for pupil and eyelid estimation.
+        For available models, use pylids.available_models()
+
+        One can also directly use a locally trained model by providing the path to
+        the model config.yaml file.
     batch_sz : int
         Batch size for DLC - may cause memory issues if too large. Default set based on RTX 2080Ti.
     eye_id : int
@@ -386,14 +390,19 @@ def analyze_video(eye_vid=None,
             eye_id = 1
         else:
             raise ValueError("If video is not `eye0.mp4` or eye1.mp4`, per pupil labs conventions, then eye_id kwarg must be specified! use eye_id = 1 for upright videos and eye_id = 0 for inverted videos.")
+    #if user provided locally trained model
+    if model_name.endswith('.yaml', '.yml'):
+        path_config_file = model_name
+        assert os.path.isfile(path_config_file), model_name + ' config.yaml file not found'
+    #else download weights and use model from pylids
+    else:
+        # download dlc model weights into pylids config folder, if they do not already exist
+        utils.get_model_weights(model=model_name)
 
-    # download dlc model weights into pylids config folder, if they do not already exist
-    utils.get_model_weights(model=model_name)
-
-    # points to appropriate config file based on model_name arg supplied 
-    usr_config_path = appdirs.user_config_dir()
-    path_config_file = os.path.join(usr_config_path,'pylids',model_name,'config.yaml')
-    assert os.path.isfile(path_config_file), model_name + ' config.yaml file not found'
+        # points to appropriate config file based on model_name arg supplied 
+        usr_config_path = appdirs.user_config_dir()
+        path_config_file = os.path.join(usr_config_path,'pylids',model_name,'config.yaml')
+        assert os.path.isfile(path_config_file), model_name + ' config.yaml file not found'
     
     #a wrapper function which runs DLC to estimate keypoints
     x,y,c = dlc_estimate_kpts(eye_vid, eye_id, path_config_file, save_dlc_output, dest_folder, batch_sz, estimate_pupils, estimate_eyelids)

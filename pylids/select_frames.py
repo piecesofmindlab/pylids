@@ -194,7 +194,7 @@ def select_augmentations(trn_fls, tst_fls, aug_fls,
         return km_augs
 
 
-def select_frames_to_label(trn_fls, tst_fls,
+def select_frames_to_label(trn_fls=None, tst_fls=None,
                          n_frames=10,
                          kmeans_batch_sz=300,
                          kmeans_type='batch',
@@ -202,11 +202,11 @@ def select_frames_to_label(trn_fls, tst_fls,
     """Summary
 
     Args:
-        train_folder_path (TYPE): Description
-        test_folder_path (TYPE): Description
+        train_folder_path (list, optional): folder path to train frames ()
+        test_folder_path (list): folder path to test frames
         num_frames (int, optional): Description
         kmeans_batch_size (int, optional): Description
-        kmeans_type (str, optional): default, batch and smae_sz
+        kmeans_type (str, optional): default, batch
         km_njobs (int, optional): number of threads available to run kmeans same size
 
     Returns:
@@ -220,95 +220,128 @@ def select_frames_to_label(trn_fls, tst_fls,
     print('\n Make sure you have enough RAM for this process else, downsample your data using k-means clustering within participants...')
 
     model = ResNet50(weights="imagenet", include_top=False)
-    cache_loc = './cache/'
+    cache_loc = './pylids_cache/'
     if not os.path.exists(cache_loc):
         os.makedirs(cache_loc)
 
     # extracting resnet features for training dataset images
-    trn_data = input("Enter the name of the train dataset: giw_edited, giw_eyelids, giw_eyelids_pupils \n")
-    if os.path.isfile(os.path.join(cache_loc, trn_data+'.npy')):
-        print('Loading train features from cache')
-        trn_rnfs = np.load(os.path.join(cache_loc, trn_data+'.npy'))
-    else:
-        trn_rnfs = get_rnfs_from_list(trn_fls, model)
-        np.save(os.path.join(cache_loc, trn_data+'.npy'), trn_rnfs)
-    if return_min_rand_frames:
-        av_trn_fs = np.mean(trn_rnfs,axis=0)
+    if trn_fls is not None:
+        trn_data = input("Enter the name of the train dataset: giw_edited, giw_eyelids, giw_eyelids_pupils \n")
+        if os.path.isfile(os.path.join(cache_loc, trn_data+'.npy')):
+            print('Loading train features from cache')
+            trn_rnfs = np.load(os.path.join(cache_loc, trn_data+'.npy'))
+        else:
+            trn_rnfs = get_rnfs_from_list(trn_fls, model)
+            np.save(os.path.join(cache_loc, trn_data+'.npy'), trn_rnfs)
+        if return_min_rand_frames:
+            av_trn_fs = np.mean(trn_rnfs,axis=0)
     
-    # extracting resnet features for test dataset images
-    tst_data = input("Enter the name of the test dataset: santini, vedb, lpw \n")
-    if os.path.isfile(os.path.join(cache_loc,tst_data+'.npy')):
-        print('Loading test features from cache')
-        tst_rnfs = np.load(os.path.join(cache_loc,tst_data+'.npy'))
+    if tst_fls is None:
+        assert trn_fls is not None, 'Test files should be provided'
     else:
-        tst_rnfs = get_rnfs_from_list(tst_fls, model)
-        np.save(os.path.join(cache_loc,tst_data+'.npy'), tst_rnfs)
+        # extracting resnet features for test dataset images
+        tst_data = input("Enter the name of the test dataset: santini, vedb, lpw, fMRI \n")
+        if os.path.isfile(os.path.join(cache_loc,tst_data+'.npy')):
+            print('Loading test features from cache')
+            tst_rnfs = np.load(os.path.join(cache_loc,tst_data+'.npy'))
+        else:
+            tst_rnfs = get_rnfs_from_list(tst_fls, model)
+            np.save(os.path.join(cache_loc,tst_data+'.npy'), tst_rnfs)
         
     # Iterative k means which keeps running till we find a given number of frames to label
     # from the test dataset / set of augmented images
     n_clusters = n_frames
     
-    #first guess for num of kmeans cluster, to encourage faster convergence
-    tr_ts_ratio = len(trn_fls)/(len(trn_fls)+len(tst_fls))
-    cluster_pad = (tr_ts_ratio * n_clusters) / (1 - tr_ts_ratio)
-    n_clusters = n_clusters + int(cluster_pad) #first guess
-    print('Initializing k-means with '+str(n_clusters)+' clusters')
-    
-    frames_found = 0
-    while True:
-        print('Running k-means clustering.... \n')
-        if kmeans_type =='batch':
-            _kmeans = MiniBatchKMeans(n_clusters, random_state=0, batch_size=kmeans_batch_sz).fit(
-                np.vstack((trn_rnfs, tst_rnfs)))
-        elif kmeans_type == 'default':
-            _kmeans = KMeans(n_clusters, random_state=0).fit(
-                np.vstack((trn_rnfs, tst_rnfs)))
-
-        print('Calculating number of frames found... \n')
-        pwise_dist = distance.cdist(_kmeans.cluster_centers_, np.vstack(((np.mean(trn_rnfs,axis=0)), np.mean(tst_rnfs,axis=0))),'euclidean')
-        frames_found = len(np.argwhere(np.argmin(pwise_dist, axis = 1)==1))
-
-        if (frames_found <= n_frames+2) and (frames_found >= n_frames-2):
-            print('found '+str(frames_found)+' frames')
-            print('Converged!')
-            break
-        else:
-            print('found '+str(frames_found)+' frames')
-            print('Did not converge :@, running another iteration... \n')
-        if n_frames > frames_found:
-            n_clusters = n_clusters + (n_frames-frames_found)
-            print('Updating n_clusters to '+str(int(n_clusters)) + '\n')
-        else:
-            n_clusters = n_clusters - (frames_found-n_frames)
-            print('Updating num_clusters to '+str(int(n_clusters)) + '\n')
-
-    tst_km_cntr = np.squeeze(_kmeans.cluster_centers_[np.argwhere(np.argmin(pwise_dist, axis = 1)==1),:])
-
-    #find unique frames from test set closest to km centroids
-    print('Selecting frames to label... \n')
-    km_pwise_dist = distance.cdist(tst_km_cntr, tst_rnfs,'cosine')
-
-    km_frame_idxs = []
-    for i in range(km_pwise_dist.shape[0]):
-        idx = 0
+    if trn_fls is not None:
+        #first guess for num of kmeans cluster, to encourage faster convergence
+        tr_ts_ratio = len(trn_fls)/(len(trn_fls)+len(tst_fls))
+        cluster_pad = (tr_ts_ratio * n_clusters) / (1 - tr_ts_ratio)
+        n_clusters = n_clusters + int(cluster_pad) #first guess
+        print('Initializing k-means with '+str(n_clusters)+' clusters')
+        
+        frames_found = 0
         while True:
-            if np.argsort(km_pwise_dist[i,:])[idx] in km_frame_idxs:
-                idx+=1
-            else:
+            print('Running k-means clustering.... \n')
+            if kmeans_type =='batch':
+                _kmeans = MiniBatchKMeans(n_clusters, random_state=0, batch_size=kmeans_batch_sz).fit(
+                    np.vstack((trn_rnfs, tst_rnfs)))
+            elif kmeans_type == 'default':
+                _kmeans = KMeans(n_clusters, random_state=0).fit(
+                    np.vstack((trn_rnfs, tst_rnfs)))
+
+            print('Calculating number of frames found... \n')
+            pwise_dist = distance.cdist(_kmeans.cluster_centers_, np.vstack(((np.mean(trn_rnfs,axis=0)), np.mean(tst_rnfs,axis=0))),'euclidean')
+            frames_found = len(np.argwhere(np.argmin(pwise_dist, axis = 1)==1))
+
+            if (frames_found <= n_frames+2) and (frames_found >= n_frames-2):
+                print('found '+str(frames_found)+' frames')
+                print('Converged!')
                 break
-        km_frame_idxs.append(np.argsort(km_pwise_dist[i,:])[idx])
-    km_frames = [tst_fls[i] for i in km_frame_idxs]
+            else:
+                print('found '+str(frames_found)+' frames')
+                print('Did not converge :@, running another iteration... \n')
+            if n_frames > frames_found:
+                n_clusters = n_clusters + (n_frames-frames_found)
+                print('Updating n_clusters to '+str(int(n_clusters)) + '\n')
+            else:
+                n_clusters = n_clusters - (frames_found-n_frames)
+                print('Updating num_clusters to '+str(int(n_clusters)) + '\n')
+
+        tst_km_cntr = np.squeeze(_kmeans.cluster_centers_[np.argwhere(np.argmin(pwise_dist, axis = 1)==1),:])
+
+        #find unique frames from test set closest to km centroids
+        print('Selecting frames to label... \n')
+        km_pwise_dist = distance.cdist(tst_km_cntr, tst_rnfs,'cosine')
+
+        km_frame_idxs = []
+        for i in range(km_pwise_dist.shape[0]):
+            idx = 0
+            while True:
+                if np.argsort(km_pwise_dist[i,:])[idx] in km_frame_idxs:
+                    idx+=1
+                else:
+                    break
+            km_frame_idxs.append(np.argsort(km_pwise_dist[i,:])[idx])
+        km_frames = [tst_fls[i] for i in km_frame_idxs]
+
+    else:
+        if kmeans_type =='batch':
+            _kmeans = MiniBatchKMeans(n_clusters, random_state=0, batch_size=kmeans_batch_sz).fit(tst_rnfs)
+        elif kmeans_type == 'default':
+            _kmeans = KMeans(n_clusters, random_state=0).fit(tst_rnfs)
+
+        tst_km_cntr = np.squeeze(_kmeans.cluster_centers_)
+
+        #find unique frames from test set closest to km centroids
+        print('Selecting frames to label... \n')
+        km_pwise_dist = distance.cdist(tst_km_cntr, tst_rnfs,'cosine')
+
+        km_frame_idxs = []
+        for i in range(km_pwise_dist.shape[0]):
+            idx = 0
+            while True:
+                if np.argsort(km_pwise_dist[i,:])[idx] in km_frame_idxs:
+                    idx+=1
+                else:
+                    break
+            km_frame_idxs.append(np.argsort(km_pwise_dist[i,:])[idx])
+        km_frames = [tst_fls[i] for i in km_frame_idxs]
+
 
     if return_min_rand_frames:
         #find unique frames from train set closest to km centroids
         rand_frame_idxs = np.random.choice(np.arange(len(tst_fls)), size=int(frames_found), replace=False)
         rand_frames = [tst_fls[i] for i in rand_frame_idxs]
         
-        #selecting augmentations closest to test set
-        min_pdist_rn = distance.cdist(av_trn_fs.reshape(1,-1), tst_rnfs, metric='cosine')
-        min_frame_idxs = np.argsort(min_pdist_rn[0])[:frames_found]
-        min_frames = [tst_fls[idx] for idx in min_frame_idxs]
-        print('Done!')
+        if trn_fls is not None:
+            #selecting augmentations closest to test set
+            min_pdist_rn = distance.cdist(av_trn_fs.reshape(1,-1), tst_rnfs, metric='cosine')
+            min_frame_idxs = np.argsort(min_pdist_rn[0])[:frames_found]
+            min_frames = [tst_fls[idx] for idx in min_frame_idxs]
+            print('Done!')
+        else:
+            min_frames = []
+            print('Done!')
         return km_frames, min_frames, rand_frames
     else:
         print('Done!')

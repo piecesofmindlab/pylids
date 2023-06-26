@@ -1,0 +1,82 @@
+    # Project definitions (do not edit)
+Task: project_name
+scorer: john_doe
+date: Jun25
+multianimalproject: false
+
+    # Project path (change when moving around)
+project_path: /path/to/the/dlc/project/folder/
+
+    # Annotation data set configuration (and individual video cropping parameters)
+video_sets:
+  /example/video/gaze_in_wild/22_1_1.mp4:
+    crop: 0, 640, 0, 480
+bodyparts:
+- Lcorner
+- Rcorner
+- upper1
+- upper2
+- upper3
+- upper4
+- upper5
+- upper6
+- upper7
+- upper8
+- upper9
+- upper10
+- upper11
+- upper12
+- upper13
+- upper14
+- upper15
+- lower1
+- lower2
+- lower3
+- lower4
+- lower5
+- lower6
+- lower7
+- lower8
+- lower9
+- lower10
+- lower11
+- lower12
+- lower13
+- lower14
+- lower15
+
+start: 0
+stop: 1
+numframes2pick: 40
+
+    # Plotting configuration
+skeleton: []
+skeleton_color: black
+pcutoff: 0.6
+dotsize: 5
+alphavalue: 0.7
+colormap: plasma
+
+    # Training,Evaluation and Analysis configuration, we do our own train test splits so all data is used for training
+TrainingFraction:
+- 1
+iteration: 0
+default_net_type: resnet_50
+default_augmenter: default
+snapshotindex: -1
+batch_size: 8
+
+    # Cropping Parameters (for analysis and outlier frame detection)
+cropping: false
+croppedtraining: false
+    #if cropping is true for analysis, then set the values here:
+x1: 0
+x2: 640
+y1: 277
+y2: 624
+
+    # Refinement configuration (parameters from annotation dataset configuration also relevant in this stage)
+corner2move2:
+- 50
+- 50
+move2corner: true
