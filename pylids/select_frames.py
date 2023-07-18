@@ -9,7 +9,9 @@ import imgaug.augmenters as iaa
 from tqdm import tqdm
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.cluster import KMeans
+from glob import glob
 from . import utils
+
 
 # WIP: add batch size changes to transformations as well
 def predict_rsnet_features(frame, model, batch=True, batch_sz=8, multiprocessing=True):
@@ -198,7 +200,9 @@ def select_frames_to_label(trn_fls=None, tst_fls=None,
                          n_frames=10,
                          kmeans_batch_sz=300,
                          kmeans_type='batch',
-                         return_min_rand_frames = False):
+                         return_min_rand_frames = False,
+                         cache_loc = './pylids_cache/',
+                         load_from_cache = True):
     """Summary
 
     Args:
@@ -207,7 +211,7 @@ def select_frames_to_label(trn_fls=None, tst_fls=None,
         num_frames (int, optional): Description
         kmeans_batch_size (int, optional): Description
         kmeans_type (str, optional): default, batch
-        km_njobs (int, optional): number of threads available to run kmeans same size
+        load_from_cache (bool, optional): set to True if you want to load trn_fls or tst_fls from cache
 
     Returns:
         TYPE: Description
@@ -220,16 +224,21 @@ def select_frames_to_label(trn_fls=None, tst_fls=None,
     print('\n Make sure you have enough RAM for this process else, downsample your data using k-means clustering within participants...')
 
     model = ResNet50(weights="imagenet", include_top=False)
-    cache_loc = './pylids_cache/'
-    if not os.path.exists(cache_loc):
+    if not os.path.exists(cache_loc) and load_from_cache:
         os.makedirs(cache_loc)
 
     # extracting resnet features for training dataset images
     if trn_fls is not None:
-        trn_data = input("Enter the name of the train dataset: giw_edited, giw_eyelids, giw_eyelids_pupils \n")
-        if os.path.isfile(os.path.join(cache_loc, trn_data+'.npy')):
-            print('Loading train features from cache')
-            trn_rnfs = np.load(os.path.join(cache_loc, trn_data+'.npy'))
+        print('Files in cache: \n')
+        print(glob(cache_loc+'*.npy'))
+        if load_from_cache:
+            trn_data = input("Enter the name of the train dataset: \n")
+            if os.path.isfile(os.path.join(cache_loc, trn_data+'.npy')):
+                print('Loading train features from cache')
+                trn_rnfs = np.load(os.path.join(cache_loc, trn_data+'.npy'))
+            else:
+                trn_rnfs = get_rnfs_from_list(trn_fls, model)
+                np.save(os.path.join(cache_loc, trn_data+'.npy'), trn_rnfs)
         else:
             trn_rnfs = get_rnfs_from_list(trn_fls, model)
             np.save(os.path.join(cache_loc, trn_data+'.npy'), trn_rnfs)
