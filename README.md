@@ -28,3 +28,6 @@ Tested with CUDA version 10.2
 ### Demos
 
 Check out the notebook in the demo folder
+
+### Funding
+The creation of pylids was funded by NSF EPSCoR \# 1920896 to Michelle R. Greene, Mark D. Lescorart, Paul MacNeilage, and Benjamin Balas.
