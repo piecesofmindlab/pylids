@@ -1,3 +1,7 @@
-eyelids_v1,https://figshare.com/ndownloader/files/34539845?private_link=c1b01a93eef9bf39ea4d
-eyelids_pupils_v1,https://figshare.com/ndownloader/files/34541768?private_link=32eda56673a44c060ae1
-eyelids_pupils_v2,https://figshare.com/ndownloader/files/34730554?private_link=1252306552235e2e0d98
+deploy_eyelids,https://figshare.com/ndownloader/files/42148044
+deploy_pupils,https://figshare.com/ndownloader/files/42147990
+giw_baseline,https://figshare.com/ndownloader/files/42148017
+pupils_lpw10,https://figshare.com/ndownloader/files/42148023
+pupils_lpw50,https://figshare.com/ndownloader/files/42148023
+eyelids_fuhl10,https://figshare.com/ndownloader/files/42148008
+eyelids_fuhl50,https://figshare.com/ndownloader/files/42148011

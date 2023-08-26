@@ -330,47 +330,71 @@ def analyze_video(eye_vid=None,
                     save_npz=False,
                     annot_lw=2, annot_clr=(0, 0, 255)):
     ''' 
-    Analyze a video of the eye and return pupil and eyelid positions.
+    Use pylids to analyze an eye video and return pupil and eyelid positions.
     Parameters
     ----------
     eye_vid : str
-        Path to video file.
+        Path to video file to analyze
+
     model_name : str
         Name of the model to use for pupil and eyelid estimation.
-        For available models, use pylids.available_models()
+        For available models, use function pylids.available_models()
 
-        One can also directly use a locally trained model by providing the path to
-        the model config.yaml file.
+        One can also directly use a locally trained model by providing
+        the path to the model config.yaml file as the model_name argument.
+
     batch_sz : int
-        Batch size for DLC - may cause memory issues if too large. Default set based on RTX 2080Ti.
+        Batch size for DLC - reduce this if your graphics card runs out
+        of memory. Default set based on RTX 2080Ti.
+    
     eye_id : int
-        0 for inverted eye, 1 for upright eye
+        0 for right eye (inverted video feed), 1 for left eye (upright video feed)
+        based on Pupil Labs convention.
+
     estimate_pupils : bool
-        Estimate pupil positions, for speedup can skip if estimating only eyelids
+        Estimate pupil positions, for speedup can set to False if estimating only eyelids
+
     estimate_eyelids : bool
-        Estimate eyelid positions, for speedup can skip if estimating only pupils
+        Estimate eyelid positions, for speedup can set to False if estimating only pupils
+
     use_ransac : bool
-        Use RANSAC to filter pupil positions.
+        Use RANSAC to filter pupil positions, 
+        slows down analysis but can be more robust to outliers
+
     timestamp_file : str
         Path to timestamp file (relavant for VEDB dataset, can ignore otherwise)
+
     dest_folder : str
         Path to destination folder for saving all outputs
+
     npz_file : str
-        Path to npz file to save outputs
+        Path to npz file to save eyelid and pupil positions
+
     out_file : str
-        Path to output video file
+        Path to output video file if save_vid is True
+
     progress_bar : function
         Function to display progress bar (variants of tqdm)
+
     constraint_eyefit : bool WIP!!!!
-        Constrains the eyelid fits to be concave and convex for the upper and lower eyelids respectively. EXPERIMENTAL - may not work well for all eyes. 
+        Constrains the eyelid fits to be concave and convex for the upper and lower eyelids respectively
+        EXPERIMENTAL - may not work well for all eyes.
+
     save_dlc_output : bool
-        Save DLC keypoint output to dest_folder, this is useful for debugging and for re-running the analysis with different parameters
+        If True saves DLC keypoint outputs to dest_folder,
+        this is useful for debugging and for re-running the 
+        analysis with different fit parameters
+
     save_vid : bool
-        Save annotated video to out_file, good for validation
+        Save annotated video to out_file
+    
     save_npz : bool
-        Save pupil and eyelid positions to npz_file in pupillabs format
+        Save pupil and eyelid positions to npz_file in pupil labs format
+        If False only returns the positions as a dictionary
+    
     annot_lw : int
         Line width for annotated video
+    
     annot_clr : tuple
         Color for annotated video, default is red
     '''
@@ -391,7 +415,7 @@ def analyze_video(eye_vid=None,
         else:
             raise ValueError("If video is not `eye0.mp4` or eye1.mp4`, per pupil labs conventions, then eye_id kwarg must be specified! use eye_id = 1 for upright videos and eye_id = 0 for inverted videos.")
     #if user provided locally trained model
-    if model_name.endswith('.yaml', '.yml'):
+    if model_name.endswith('.yaml'):
         path_config_file = model_name
         assert os.path.isfile(path_config_file), model_name + ' config.yaml file not found'
     #else download weights and use model from pylids
