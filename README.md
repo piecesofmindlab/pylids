@@ -32,7 +32,7 @@ Check out the notebooks in the demo folder to see how to use pylids and train ne
 ### Funding
 The creation of pylids was funded by NSF EPSCoR \# 1920896 to Michelle R. Greene, Mark D. Lescorart, Paul MacNeilage, and Benjamin Balas.
 
-#Citation
+### Citation
 If you use pylids in your research, please cite the following paper:
     
 Biswas, A., & Lescroart, M. D. (2023). A framework for generalizable neural networks for robust estimation of eyelids and pupils. Behavior Research Methods, 1-23.

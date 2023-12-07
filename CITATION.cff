@@ -5,7 +5,7 @@ authors:
   given-names: "Arnab"
 - family-names: "Lescroart"
   given-names: "Mark"
-title: "Pylids"
-doi: 10.5281/zenodo.8185215 
+title: "A framework for generalizable neural networks for robust estimation of eyelids and pupils"
+doi: 10.3758/s13428-023-02266-3 
 date-released: 2023-07-23
 url: "https://github.com/piecesofmindslab/pylids"
