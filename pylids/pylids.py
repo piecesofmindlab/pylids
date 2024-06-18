@@ -485,7 +485,7 @@ def analyze_video(eye_vid=None,
             dlc_annot['ellipse'] = dlc_ellipse
 
             dlc_annot['confidence'] = np.mean(c_fr[32:]) #FLAG
-            dlc_annot['norm_pos'] = [ el_xc/frame.shape[0],  el_yc/frame.shape[1]]
+            dlc_annot['norm_pos'] = [ el_xc/frame.shape[1],  el_yc/frame.shape[0]]
             dlc_annot['diameter'] =  np.mean([el_a*2, el_b*2])
 
         dlc_annot['id'] = eye_id
