@@ -1,0 +1,22 @@
+name: pylids
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - pip
+  - ipython
+  - jupyter
+  - nb_conda
+  - notebook<7.0.0
+  - ffmpeg
+  - pytables==3.8.0
+  - pillow
+  - tqdm
+  - pypng
+  - pip:
+    - torch
+    - torchvision
+    - deeplabcut[wandb]==3.0.0rc8
+    - appdirs
+    - imagecorruptions

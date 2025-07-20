@@ -151,6 +151,7 @@ def get_model_weights(model):
         cfg['project_path'] = os.path.join(usr_config_dir,'pylids',model_name)
         deeplabcut.auxiliaryfunctions.write_plainconfig(path_config,cfg)
 
+        #change paths in pytorch config and 
         trainposeconfigfile,_,_=deeplabcut.return_train_network_path(path_config, shuffle=1)
         cfg_dlc=deeplabcut.auxiliaryfunctions.read_plainconfig(trainposeconfigfile)
         cfg_dlc['project_path'] = os.path.join(usr_config_dir,'pylids', model_name)

@@ -1,7 +1,2 @@
-deploy_eyelids,https://figshare.com/ndownloader/files/42148044?private_link=4f71c074889c69619f66
-deploy_pupils,https://figshare.com/ndownloader/files/42147990?private_link=8d9eb1b203b59dcee1d8
-giw_baseline,https://figshare.com/ndownloader/files/42148017
-pupils_lpw10,https://figshare.com/ndownloader/files/42148023
-pupils_lpw50,https://figshare.com/ndownloader/files/42148023
-eyelids_fuhl10,https://figshare.com/ndownloader/files/42148008
-eyelids_fuhl50,https://figshare.com/ndownloader/files/42148011
+pytorch_eyelid_pupils_v1,
+pyttorch_eylids_v1,

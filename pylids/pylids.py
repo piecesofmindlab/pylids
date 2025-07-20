@@ -15,15 +15,7 @@ import matplotlib.pyplot as plt
 import deeplabcut
 import appdirs
 import tempfile
-import polyfit
 from . import utils
-
-import tensorflow as tf
-
-#TF book keeping for one off annoying bug
-gpu_devices = tf.config.experimental.list_physical_devices('GPU')
-for device in gpu_devices:
-    tf.config.experimental.set_memory_growth(device, True)
 
 ############################################
 ### ---  pupil and eylid fits  --- ###
