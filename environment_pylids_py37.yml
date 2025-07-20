@@ -2,7 +2,6 @@ name: pylids
 channels:
   - anaconda
   - conda-forge
-  - auto 
   - omnia
 dependencies:
   - python==3.7
@@ -14,21 +13,12 @@ dependencies:
   - ipython
   - pillow
   - tqdm
-  - eigen3
   - cython
   - numexpr
-  - scikit-learn
-  - scikit-image
-  - shapely
-  - msgpack-python==0.6.2
-  - python-wget
   - pip
   - pypng
   - tensorflow-gpu==1.15.0
-  - cudatoolkit==10.2  
+  - cudatoolkit==10.0.130
   - pip:
-    - netcdf4
-    - imageio-ffmpeg
-    - polyfit
     - appdirs
     - imagecorruptions
