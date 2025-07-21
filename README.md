@@ -24,7 +24,7 @@ pylids has been built to be used with the pupil lab gaze estimation pipeline.
 
 We assume you have conda or mamba setup. For GPU usage make sure you have CUDA installed. Current version has been tested with CUDA 12.2
 
-Use the included .yaml file to create the pylids environment `cona env create -f PYLIDS.yml`
+Use the included .yml file to create the pylids environment `conda env create -f PYLIDS.yml`
 
 ### Demos
 
