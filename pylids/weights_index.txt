@@ -1,2 +1,2 @@
-pytorch_eyelid_pupils_v1,https://figshare.com/ndownloader/files/56411054?private_link=21906806d13eaf2b4bd3
-pyttorch_eylids_v1,https://figshare.com/ndownloader/files/56411054?private_link=21906806d13eaf2b4bd3
+pytorch_eyelid_pupils_v1,https://figshare.com/ndownloader/files/56414198?private_link=42041a71ac4ae1373785
+pytorch_eyelids_v1,https://figshare.com/ndownloader/files/56411054?private_link=21906806d13eaf2b4bd3
