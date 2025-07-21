@@ -148,14 +148,19 @@ def get_model_weights(model):
 
         path_config = os.path.join(usr_config_dir,'pylids',model,'config.yaml')
         cfg=deeplabcut.auxiliaryfunctions.read_plainconfig(path_config)
-        cfg['project_path'] = os.path.join(usr_config_dir,'pylids',model_name)
+        cfg['project_path'] = os.path.join(usr_config_dir,'pylids',model)
         deeplabcut.auxiliaryfunctions.write_plainconfig(path_config,cfg)
 
-        #change paths in pytorch config and 
-        trainposeconfigfile,_,_=deeplabcut.return_train_network_path(path_config, shuffle=1)
-        cfg_dlc=deeplabcut.auxiliaryfunctions.read_plainconfig(trainposeconfigfile)
-        cfg_dlc['project_path'] = os.path.join(usr_config_dir,'pylids', model_name)
-        deeplabcut.auxiliaryfunctions.write_plainconfig(trainposeconfigfile,cfg_dlc)
+        pytorchconfig, poseconfigfile,_=deeplabcut.return_train_network_path(path_config, shuffle=1)
+        cfg_dlc=deeplabcut.auxiliaryfunctions.read_plainconfig(poseconfigfile)
+        cfg_dlc['dataset'] = os.path.join(usr_config_dir,'pylids', model)
+        deeplabcut.auxiliaryfunctions.write_plainconfig(poseconfigfile,cfg_dlc)
+
+        pytorchcfg=deeplabcut.auxiliaryfunctions.read_plainconfig(pytorchconfig)
+        pytorchcfg['project_path'] = os.path.join(usr_config_dir,'pylids', model)
+        pytorchcfg['metadata']['pose_config_path'] = str(poseconfigfile)
+        pytorchcfg['metadata']['project_path'] = os.path.join(usr_config_dir,'pylids', model)
+        deeplabcut.auxiliaryfunctions.write_plainconfig(pytorchconfig,pytorchcfg)
 
         print("Done! \n")
     else:

@@ -20,6 +20,7 @@ parts/
 sdist/
 var/
 wheels/
+demo/eye_annotation.mp4
 pip-wheel-metadata/
 share/python-wheels/
 *.egg-info/
