@@ -20,4 +20,4 @@ dependencies:
     - deeplabcut[wandb]==3.0.0rc8
     - imagecorruptions
     - appdirs
-    - -e .
+    - .
