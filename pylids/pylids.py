@@ -49,7 +49,7 @@ def ols_pupil_fit(all_points):
     return xc, yc, a, b, theta
 
 
-def fit_pupil(x, y, c=None, p_cutoff=0.6, use_ransac=False, min_samples=5, residual_threshold=1, max_iter=10000):
+def fit_pupil(x, y, c=None, p_cutoff=0.3, use_ransac=False, min_samples=5, residual_threshold=1, max_iter=10000):
     """Pupil estimation for a given frame
         given a frames * keypoints array
 
@@ -496,7 +496,7 @@ def analyze_video(eye_vid=None,
 
             if estimate_eyelids:
                 corner = [0, 0]
-                if x_viz_eye is not 0: #No eyelid detected
+                if x_viz_eye != 0: #No eyelid detected
                     for k in range(len(x_viz_eye)):
                         corner = np.vstack((corner, [x_viz_eye[k], fit_eye_up[k]]))
                     for k in range(len(x_viz_eye)):
@@ -510,7 +510,7 @@ def analyze_video(eye_vid=None,
                                         is_closed, color, l_thick)
 
             if estimate_pupils:
-                if el_xc is not 0: #No pupil detected
+                if el_xc != 0: #No pupil detected
                     center_coords = (int(el_xc), int(el_yc))
                     axes_l = (int(el_a), int(el_b))
                     strt = 0
