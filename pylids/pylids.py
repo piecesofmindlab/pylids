@@ -459,9 +459,19 @@ def analyze_video(eye_vid=None,
         if estimate_eyelids:
             # estimate eyelid shape
             x_viz_eye, fit_eye_up, fit_eye_lo = fit_eyelid(x_fr, y_fr, c_fr, return_full_eyelid=False,frame_x_end=frame.shape[1],use_constraints=constraint_eyefit)
-            dlc_annot['eyelid_up_y'] = fit_eye_up
-            dlc_annot['eyelid_lo_y'] = fit_eye_lo
-            dlc_annot['eyelid_x'] = x_viz_eye
+            
+            # Ensure consistent array shapes
+            if isinstance(x_viz_eye, np.ndarray) and x_viz_eye.size > 0:
+                dlc_annot['eyelid_up_y'] = fit_eye_up
+                dlc_annot['eyelid_lo_y'] = fit_eye_lo
+                dlc_annot['eyelid_x'] = x_viz_eye
+            else:
+                # Failed fitting - use arrays with same shape as successful fits
+                # Create arrays with NaN values to maintain shape consistency
+                dlc_annot['eyelid_up_y'] = np.full(100, np.nan)
+                dlc_annot['eyelid_lo_y'] = np.full(100, np.nan)
+                dlc_annot['eyelid_x'] = np.full(100, np.nan)
+                
             if estimate_eyelids and not estimate_pupils:
                 # to make sure vedb-gaze does not mark this session as failed
                 dlc_annot['norm_pos'] = [0,0]
@@ -496,7 +506,7 @@ def analyze_video(eye_vid=None,
 
             if estimate_eyelids:
                 corner = [0, 0]
-                if len(x_viz_eye) > 0: #No eyelid detected
+                if isinstance(x_viz_eye, np.ndarray) and x_viz_eye.size > 0: #No eyelid detected
                     for k in range(len(x_viz_eye)):
                         corner = np.vstack((corner, [x_viz_eye[k], fit_eye_up[k]]))
                     for k in range(len(x_viz_eye)):
@@ -510,7 +520,7 @@ def analyze_video(eye_vid=None,
                                         is_closed, color, l_thick)
 
             if estimate_pupils:
-                if len(el_xc) > 0: #No pupil detected
+                if isinstance(el_xc, (int, float)) and el_xc != 0: #No pupil detected
                     center_coords = (int(el_xc), int(el_yc))
                     axes_l = (int(el_a), int(el_b))
                     strt = 0
@@ -536,6 +546,35 @@ def analyze_video(eye_vid=None,
     
     return dlc_dicts_out
 
+def convert_dlc_dicts_to_arrays(dictlist):
+    """Convert DLC dictionary list to arrays, handling mixed data types and nested structures."""
+    if not dictlist:
+        return {}
+    
+    dict_fields = list(dictlist[0].keys())
+    out = {}
+    
+    for field in dict_fields:
+        values = [d[field] for d in dictlist]
+        first_value = values[0]
+        
+        if isinstance(first_value, dict):
+            # Handle nested dictionaries (like ellipse)
+            for key, val in first_value.items():
+                new_field = f"{field}_{key}"
+                out[new_field] = np.array([d[field][key] if d[field] is not None else None for d in dictlist])
+        elif isinstance(first_value, (list, np.ndarray)):
+            # Handle lists and arrays
+            try:
+                out[field] = np.array(values)
+            except ValueError:
+                # If shapes are inconsistent, store as object array
+                out[field] = np.array(values, dtype=object)
+        else:
+            # Handle simple types (int, float, etc.)
+            out[field] = np.array(values)
+    
+    return out
 
 ############################################
 ### --- utility functions  --- ###
