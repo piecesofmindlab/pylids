@@ -8,4 +8,9 @@ setup(name="""pylids""",
           license='MIT',
           url='https://github.com/piecesofmindlab/pylids',
           packages=['pylids'],
+          package_data={
+              'pylids':[
+                'weights_index.txt'
+                  ],
+              },
           long_description=open('README.md').read())

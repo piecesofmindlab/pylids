@@ -305,7 +305,7 @@ def dlc_estimate_kpts(eye_vid, eye_id, path_config_file, save_dlc_output, dest_f
 ### ---  main wrapper function  --- ###
 ############################################
 def analyze_video(eye_vid=None,
-                    model_name='deploy_pupils',
+                    model_name='pytorch_eyelid_pupils_v1',
                     batch_sz =8,
                     eye_id = None,
                     estimate_pupils=True,
