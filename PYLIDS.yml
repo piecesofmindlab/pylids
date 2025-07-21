@@ -18,5 +18,6 @@ dependencies:
     - torch
     - torchvision
     - deeplabcut[wandb]==3.0.0rc8
-    - appdirs
     - imagecorruptions
+    - appdirs
+    - -e .

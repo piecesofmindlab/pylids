@@ -496,7 +496,7 @@ def analyze_video(eye_vid=None,
 
             if estimate_eyelids:
                 corner = [0, 0]
-                if x_viz_eye != 0: #No eyelid detected
+                if len(x_viz_eye) > 0: #No eyelid detected
                     for k in range(len(x_viz_eye)):
                         corner = np.vstack((corner, [x_viz_eye[k], fit_eye_up[k]]))
                     for k in range(len(x_viz_eye)):
@@ -510,7 +510,7 @@ def analyze_video(eye_vid=None,
                                         is_closed, color, l_thick)
 
             if estimate_pupils:
-                if el_xc != 0: #No pupil detected
+                if len(el_xc) > 0: #No pupil detected
                     center_coords = (int(el_xc), int(el_yc))
                     axes_l = (int(el_a), int(el_b))
                     strt = 0
