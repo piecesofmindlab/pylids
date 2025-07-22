@@ -365,7 +365,7 @@ def analyze_video(eye_vid=None,
     annot_clr : tuple
         Color for annotated video, default is red
     '''
-    
+    eye_vid = str(eye_vid) # Allow pathlib.Path object 
     # looking for timestamps, specific to the vedb project
     if timestamp_file is not None:
         timestamps = np.load(timestamp_file)
