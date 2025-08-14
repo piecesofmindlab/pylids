@@ -6,6 +6,7 @@ import zipfile
 import appdirs
 import deeplabcut
 import tempfile
+from tqdm import tqdm
 
 ############################################
 ### ---  parsing dlc keypoints  --- ###
@@ -135,15 +136,27 @@ def get_model_weights(model):
                 break
 
         assert model in model_names, "model does not exist \n available models are \n" +str(model_names) + '\n You selected: ' + model
-
         print("Downloading model weights for model " + model)
     
-        r = requests.get(model_url)
+        r = requests.get(model_url, stream=True)
+        total_size = int(r.headers.get('content-length', 0))
 
         with tempfile.TemporaryDirectory() as tmpdirname:
-            with open(os.path.join(tmpdirname,model +'.zip'),'wb') as f:
-                f.write(r.content)
-            with zipfile.ZipFile(os.path.join(tmpdirname,model+'.zip')) as z:
+            zip_path = os.path.join(tmpdirname, model + '.zip')
+            
+            with open(zip_path, 'wb') as f:
+                if total_size == 0:
+                    # No content-length header, just download without progress bar
+                    f.write(r.content)
+                else:
+                    # Download with progress bar
+                    with tqdm(total=total_size, unit='B', unit_scale=True, desc="Downloading") as pbar:
+                        for chunk in r.iter_content(chunk_size=8192):
+                            if chunk:
+                                f.write(chunk)
+                                pbar.update(len(chunk))
+            
+            with zipfile.ZipFile(zip_path) as z:
                 z.extractall(os.path.join(usr_config_dir, 'pylids'))
 
         path_config = os.path.join(usr_config_dir,'pylids',model,'config.yaml')

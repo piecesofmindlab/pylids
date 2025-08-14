@@ -49,7 +49,7 @@ def ols_pupil_fit(all_points):
     return xc, yc, a, b, theta
 
 
-def fit_pupil(x, y, c=None, p_cutoff=0.3, use_ransac=False, min_samples=5, residual_threshold=1, max_iter=10000):
+def fit_pupil(x, y, c=None, p_cutoff=0.4, model_type = None, use_ransac=False, min_samples=5, residual_threshold=1, max_iter=10000):
     """Pupil estimation for a given frame
         given a frames * keypoints array
 
@@ -59,6 +59,8 @@ def fit_pupil(x, y, c=None, p_cutoff=0.3, use_ransac=False, min_samples=5, resid
         c (float, optional): likelihood or confidence for a keypoint 
 
         p_cutoff (float, optional): likelihood cutoff for using a given pupil keypoint in the ellipse fit
+
+        model_type (str, optional): 'pupil' or 'eyelid' or 'eyelid_pupil', type of model to fit and number of keypoints to expect
 
         use_ransac (bool, optional): Force RANSAC for all pupil estimations, super slow but may be more accurate
 
@@ -76,10 +78,18 @@ def fit_pupil(x, y, c=None, p_cutoff=0.3, use_ransac=False, min_samples=5, resid
 
     try:
         #check that 48 keypoints are present
-        assert len(x) == 48, 'Found ' + str(len(x)) + ' keypoints, expected 48 (32 for eyelids and 16 for pupil)'
+        if model_type == 'eyelid_pupil':
+            assert len(x) == 48, 'Found ' + str(len(x)) + ' keypoints, expected 48 (32 for eyelids and 16 for pupil)'
+        elif model_type == 'pupil':
+            assert len(x) == 16, 'Found ' + str(len(x)) + ' keypoints, expected 16 (16 for pupil)'
+        elif model_type == 'eyelid':
+            raise ValueError('eyelid" model type is not supported for pupil fitting')
+        else:
+            raise ValueError('Invalid model type: ' + model_type + ', expected "pupil", "eyelid", or "eyelid_pupil"')
+        
         x_pupil, y_pupil = x[-16:], y[-16:]
         
-        if c is None:
+        if c is None: # Dont filter by confidence 
             x_pupil_filt, y_pupil_filt = x_pupil, y_pupil
         else:
             x_pupil_filt, y_pupil_filt = x_pupil[c[-16:]
@@ -142,6 +152,7 @@ def fit_eyelid(x, y, c,
     return_full_eyelid=False,
     weighted=True,
     use_constraints=False,
+    model_type = None,
     **kwargs):
     """Weigted OLS on eyelid keypoints to estimate eyelid shape
 
@@ -174,7 +185,16 @@ def fit_eyelid(x, y, c,
 
         fit_up, fit_lo: upper and lower eyelids y coordinates
     """
-    upper, lower = utils.parse_keypoints(x, y, c, **kwargs)
+    if model_type == 'eyelid_pupil':
+        assert len(x) == 48, 'Found ' + str(len(x)) + ' keypoints, expected 48 (32 for eyelids and 16 for pupil)'
+    elif model_type == 'pupil':
+        raise ValueError('pupil" model type is not supported for eyelid fitting')
+    elif model_type == 'eyelid':
+        assert len(x) == 32, 'Found ' + str(len(x)) + ' keypoints, expected 32 (32 for eyelids)'
+    else:
+        raise ValueError('Invalid model type: ' + model_type + ', expected "pupil", "eyelid", or "eyelid_pupil"')
+    
+    upper, lower = utils.parse_keypoints(x, y, c,**kwargs)
     eye_lo_x, eye_lo_y, eye_lo_c = lower.T
     eye_up_x, eye_up_y, eye_up_c = upper.T
 
@@ -279,8 +299,8 @@ def dlc_estimate_kpts(eye_vid, path_config_file, save_dlc_output, dest_folder, b
 ### ---  main wrapper function  --- ###
 ############################################
 def analyze_video(eye_vid=None,
-                    model_name='pytorch_eyelid_pupils_v1',
-                    batch_sz =8,
+                    model_name='pytorch-pupil-v1',
+                    batch_sz = 8,
                     eye_id = None,
                     estimate_pupils=True,
                     estimate_eyelids=True,
@@ -365,6 +385,12 @@ def analyze_video(eye_vid=None,
     annot_clr : tuple
         Color for annotated video, default is red
     '''
+    ##WIP
+    # if '.yaml' in model_name:
+    model_type = model_name.split('-')[-2]
+    if model_type not in ['pupil', 'eyelid', 'eyelid_pupil']:
+        raise ValueError('Invalid model type: ' + model_type + ', expected "pupil", "eyelid", or "eyelid_pupil"')
+    
     eye_vid = str(eye_vid) # Allow pathlib.Path object 
     # looking for timestamps, specific to the vedb project
     if timestamp_file is not None:
@@ -428,9 +454,9 @@ def analyze_video(eye_vid=None,
         dlc_annot['dlc_kpts_y'] = y_fr
         dlc_annot['dlc_confidence'] = c_fr
 
-        if estimate_eyelids:
+        if estimate_eyelids and (model_type == 'eyelid' or model_type == 'eyelid_pupil'):
             # estimate eyelid shape
-            x_viz_eye, fit_eye_up, fit_eye_lo = fit_eyelid(x_fr, y_fr, c_fr, return_full_eyelid=False,frame_x_end=frame.shape[1],use_constraints=constraint_eyefit)
+            x_viz_eye, fit_eye_up, fit_eye_lo = fit_eyelid(x_fr, y_fr, c_fr, model_type=model_type, return_full_eyelid=False,frame_x_end=frame.shape[1],use_constraints=constraint_eyefit)
             
             # Ensure consistent array shapes
             if isinstance(x_viz_eye, np.ndarray) and x_viz_eye.size > 0:
@@ -448,9 +474,9 @@ def analyze_video(eye_vid=None,
                 # to make sure vedb-gaze does not mark this session as failed
                 dlc_annot['norm_pos'] = [0,0]
             
-        if estimate_pupils:
+        if estimate_pupils and (model_type == 'pupil' or model_type == 'eyelid_pupil'):
             # estimate pupil position           
-            el_xc, el_yc, el_a, el_b, el_theta = fit_pupil(x_fr, y_fr, c_fr)
+            el_xc, el_yc, el_a, el_b, el_theta = fit_pupil(x_fr, y_fr, c_fr, model_type=model_type)
             #as per pupil labs conventions
             dlc_ellipse = {}
             dlc_ellipse['axes'] = [el_a*2, el_b*2]
@@ -458,7 +484,7 @@ def analyze_video(eye_vid=None,
             dlc_ellipse['center'] = [el_xc, el_yc]
             dlc_annot['ellipse'] = dlc_ellipse
 
-            dlc_annot['confidence'] = np.mean(c_fr[32:]) #FLAG
+            dlc_annot['confidence'] = np.mean(c_fr[-16:]) #FLAG magic number
             dlc_annot['norm_pos'] = [ el_xc/frame.shape[1],  el_yc/frame.shape[0]]
             dlc_annot['diameter'] =  np.mean([el_a*2, el_b*2])
         if eye_id is not None:
@@ -473,7 +499,7 @@ def analyze_video(eye_vid=None,
         if save_vid:
             _, frame = vid.read()
 
-            if estimate_eyelids:
+            if estimate_eyelids and (model_type == 'eyelid' or model_type == 'eyelid_pupil'):
                 corner = [0, 0]
                 if isinstance(x_viz_eye, np.ndarray) and x_viz_eye.size > 0: #No eyelid detected
                     for k in range(len(x_viz_eye)):
@@ -488,7 +514,7 @@ def analyze_video(eye_vid=None,
                     frame = cv2.polylines(frame, np.int32([corner]),
                                         is_closed, color, l_thick)
 
-            if estimate_pupils:
+            if estimate_pupils and (model_type == 'pupil' or model_type == 'eyelid_pupil'):
                 if isinstance(el_xc, (int, float)) and el_xc != 0: #No pupil detected
                     center_coords = (int(el_xc), int(el_yc))
                     axes_l = (int(el_a), int(el_b))
