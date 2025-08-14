@@ -250,55 +250,29 @@ def fit_eyelid(x, y, c,
 ############################################
 
 
-def dlc_estimate_kpts(eye_vid, eye_id, path_config_file, save_dlc_output, dest_folder, batch_sz, estimate_pupils, estimate_eyelids):
-    if eye_id == 1:
-        if save_dlc_output:
+def dlc_estimate_kpts(eye_vid, path_config_file, save_dlc_output, dest_folder, batch_sz, estimate_pupils, estimate_eyelids):
+    if save_dlc_output:
+        deeplabcut.analyze_videos(path_config_file,
+                                    [eye_vid],
+                                videotype='.mp4',
+                                batchsize=batch_sz, #change in pose_config.yml to 1
+                                destfolder=dest_folder)
+        assert len(glob.glob(os.path.join(dest_folder,'*.h5')))==1, 'Total config files in ' + str(tmpdirname) + ' is not equal to 1'
+        kpt_h5 = glob.glob(os.path.join(dest_folder,'*.h5'))[0]
+        x, y, c = utils.get_kpts_h5(kpt_h5)
+
+    
+    else:
+        with tempfile.TemporaryDirectory() as tmpdirname:
             deeplabcut.analyze_videos(path_config_file,
                                         [eye_vid],
                                     videotype='.mp4',
                                     batchsize=batch_sz, #change in pose_config.yml to 1
-                                    destfolder=dest_folder)
-            assert len(glob.glob(os.path.join(dest_folder,'*.h5')))==1, 'Total config files in ' + str(tmpdirname) + ' is not equal to 1'
-            kpt_h5 = glob.glob(os.path.join(dest_folder,'*.h5'))[0]
+                                    destfolder=tmpdirname)
+            print(glob.glob(os.path.join(tmpdirname,'*.h5')))
+            assert len(glob.glob(os.path.join(tmpdirname,'*.h5')))==1, 'Total config files in ' + str(tmpdirname) + ' is not equal to 1'
+            kpt_h5 = glob.glob(os.path.join(tmpdirname,'*.h5'))[0] #or filtered .h5
             x, y, c = utils.get_kpts_h5(kpt_h5)
-
-        
-        else:
-            with tempfile.TemporaryDirectory() as tmpdirname:
-                deeplabcut.analyze_videos(path_config_file,
-                                            [eye_vid],
-                                        videotype='.mp4',
-                                        batchsize=batch_sz, #change in pose_config.yml to 1
-                                        destfolder=tmpdirname)
-                print(glob.glob(os.path.join(tmpdirname,'*.h5')))
-                assert len(glob.glob(os.path.join(tmpdirname,'*.h5')))==1, 'Total config files in ' + str(tmpdirname) + ' is not equal to 1'
-                kpt_h5 = glob.glob(os.path.join(tmpdirname,'*.h5'))[0] #or filtered .h5
-                x, y, c = utils.get_kpts_h5(kpt_h5)
-
-    else:
-        if save_dlc_output:
-            deeplabcut.analyze_videos(path_config_file,
-                                        [eye_vid],
-                                    videotype='.mp4',
-                                    batchsize=batch_sz,
-                                    destfolder=dest_folder,
-                                    flip_video = True)
-            assert len(glob.glob(os.path.join(dest_folder,'*.h5')))==1, 'Total config files in ' + str(tmpdirname) + ' is not equal to 1'
-            kpt_h5 = glob.glob(os.path.join(dest_folder,'*.h5'))[0]
-            x, y, c = utils.get_kpts_h5(kpt_h5)
-
-        else:
-            with tempfile.TemporaryDirectory() as tmpdirname:
-                deeplabcut.analyze_videos(path_config_file,
-                                            [eye_vid],
-                                        videotype='.mp4',
-                                        batchsize=batch_sz, 
-                                        destfolder=tmpdirname,
-                                        flip_video = True)
-                print(glob.glob(os.path.join(tmpdirname,'*.h5')))
-                assert len(glob.glob(os.path.join(tmpdirname,'*.h5')))==1, 'Total config files in ' + str(tmpdirname) + ' is not equal to 1'
-                kpt_h5 = glob.glob(os.path.join(tmpdirname,'*.h5'))[0]
-                x, y, c = utils.get_kpts_h5(kpt_h5)
     return x, y, c
 
 ############################################
@@ -340,8 +314,9 @@ def analyze_video(eye_vid=None,
         of memory. Default set based on RTX 2080Ti.
     
     eye_id : int
-        0 for right eye (inverted video feed), 1 for left eye (upright video feed)
-        based on Pupil Labs convention.
+        0 for right eye, 1 for left eye (if you want to keep track), 
+        based on Pupil Labs convention. Code assumes all videos have been collected with or
+        modified to have both eyes be UPRIGHT in the videos.
 
     estimate_pupils : bool
         Estimate pupil positions, for speedup can set to False if estimating only eyelids
@@ -390,7 +365,7 @@ def analyze_video(eye_vid=None,
     annot_clr : tuple
         Color for annotated video, default is red
     '''
-    
+    eye_vid = str(eye_vid) # Allow pathlib.Path object 
     # looking for timestamps, specific to the vedb project
     if timestamp_file is not None:
         timestamps = np.load(timestamp_file)
@@ -405,7 +380,7 @@ def analyze_video(eye_vid=None,
         elif 'eye1' in eye_vid:
             eye_id = 1
         else:
-            raise ValueError("If video is not `eye0.mp4` or eye1.mp4`, per pupil labs conventions, then eye_id kwarg must be specified! use eye_id = 1 for upright videos and eye_id = 0 for inverted videos.")
+            pass
     #if user provided locally trained model
     if model_name.endswith('.yaml'):
         path_config_file = model_name
@@ -421,7 +396,7 @@ def analyze_video(eye_vid=None,
         assert os.path.isfile(path_config_file), model_name + ' config.yaml file not found'
     
     #a wrapper function which runs DLC to estimate keypoints
-    x,y,c = dlc_estimate_kpts(eye_vid, eye_id, path_config_file, save_dlc_output, dest_folder, batch_sz, estimate_pupils, estimate_eyelids)
+    x,y,c = dlc_estimate_kpts(eye_vid, path_config_file, save_dlc_output, dest_folder, batch_sz, estimate_pupils, estimate_eyelids)
     
     # main outputs are saved as a list of dicts
     dlc_dicts = []
@@ -445,10 +420,7 @@ def analyze_video(eye_vid=None,
     # main loop iterate over all frames
     for i in progress_bar(range(x.shape[0])):
         # select keypoint from the current frame
-        if eye_id == 1:
-            x_fr, y_fr, c_fr = x[i, :], y[i, :], c[i, :]
-        else:
-            x_fr, y_fr, c_fr = x[i, :], frame.shape[0]-y[i, :], c[i, :]
+        x_fr, y_fr, c_fr = x[i, :], y[i, :], c[i, :]
         # frame level output dict
         dlc_annot ={}
         # saving original dlc keypoints
@@ -489,8 +461,8 @@ def analyze_video(eye_vid=None,
             dlc_annot['confidence'] = np.mean(c_fr[32:]) #FLAG
             dlc_annot['norm_pos'] = [ el_xc/frame.shape[1],  el_yc/frame.shape[0]]
             dlc_annot['diameter'] =  np.mean([el_a*2, el_b*2])
-
-        dlc_annot['id'] = eye_id
+        if eye_id is not None:
+            dlc_annot['id'] = eye_id
         if timestamp_file is not None:
             dlc_annot["timestamp"]=timestamps[i]
         
@@ -500,9 +472,6 @@ def analyze_video(eye_vid=None,
         # create pylids annotation video
         if save_vid:
             _, frame = vid.read()
-            #WIP
-            # if eye_id == 0:
-            #     frame = cv2.flip(frame, 0)
 
             if estimate_eyelids:
                 corner = [0, 0]
