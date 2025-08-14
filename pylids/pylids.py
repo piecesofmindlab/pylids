@@ -16,6 +16,7 @@ import deeplabcut
 import appdirs
 import tempfile
 from . import utils
+from deeplabcut.core.engine import Engine
 
 ############################################
 ### ---  pupil and eylid fits  --- ###
@@ -276,7 +277,8 @@ def dlc_estimate_kpts(eye_vid, path_config_file, save_dlc_output, dest_folder, b
                                     [eye_vid],
                                 videotype='.mp4',
                                 batchsize=batch_sz, #change in pose_config.yml to 1
-                                destfolder=dest_folder)
+                                destfolder=dest_folder,
+                                engine=Engine.PYTORCH)
         assert len(glob.glob(os.path.join(dest_folder,'*.h5')))==1, 'Total config files in ' + str(tmpdirname) + ' is not equal to 1'
         kpt_h5 = glob.glob(os.path.join(dest_folder,'*.h5'))[0]
         x, y, c = utils.get_kpts_h5(kpt_h5)
@@ -288,7 +290,8 @@ def dlc_estimate_kpts(eye_vid, path_config_file, save_dlc_output, dest_folder, b
                                         [eye_vid],
                                     videotype='.mp4',
                                     batchsize=batch_sz, #change in pose_config.yml to 1
-                                    destfolder=tmpdirname)
+                                    destfolder=tmpdirname,
+                                    engine = Engine.PYTORCH)
             print(glob.glob(os.path.join(tmpdirname,'*.h5')))
             assert len(glob.glob(os.path.join(tmpdirname,'*.h5')))==1, 'Total config files in ' + str(tmpdirname) + ' is not equal to 1'
             kpt_h5 = glob.glob(os.path.join(tmpdirname,'*.h5'))[0] #or filtered .h5
